@@ -1,0 +1,6 @@
+{
+  "name": "CAA x iShowSpeed — Talent Commerce Dashboard",
+  "description": "Proposed CAA Talent Commerce Management Platform proof of concept for iShowSpeed (Darren Watkins Jr.), powered by Mercenta.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
