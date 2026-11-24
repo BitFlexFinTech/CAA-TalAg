@@ -4,6 +4,10 @@ import { Sidebar } from './components/layout/Sidebar';
 import { TopBar } from './components/layout/TopBar';
 import { DashboardView } from './views/DashboardView';
 import { ProfileView } from './views/ProfileView';
+import { BrandsDiscoveryView } from './views/BrandsDiscoveryView';
+import { UkOpportunitiesView } from './views/UkOpportunitiesView';
+import { AcquisitionView } from './views/AcquisitionView';
+import { BrandStoreView } from './views/BrandStoreView';
 import { ProductsView } from './views/ProductsView';
 import { DevelopmentView } from './views/DevelopmentView';
 import { CollectionsView } from './views/CollectionsView';
@@ -22,6 +26,7 @@ const WorkspaceShell: React.FC = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [addProductSignal, setAddProductSignal] = useState(0);
   const [addCampaignSignal, setAddCampaignSignal] = useState(0);
+  const [addTalentSignal, setAddTalentSignal] = useState(0);
 
   const handleOpenAddProduct = () => {
     setActiveSection('concepts');
@@ -33,9 +38,20 @@ const WorkspaceShell: React.FC = () => {
     setAddCampaignSignal((n) => n + 1);
   };
 
+  const handleOpenAddTalent = () => {
+    setActiveSection('profile');
+    setAddTalentSignal((n) => n + 1);
+  };
+
   const quickAction =
-    activeSection === 'campaigns'
+    activeSection === 'dashboard' || activeSection === 'profile'
+      ? { label: 'Add Talent & Discover', handler: handleOpenAddTalent }
+      : activeSection === 'campaigns'
       ? { label: 'New Campaign', handler: handleOpenAddCampaign }
+      : activeSection === 'brands' || activeSection === 'uk-opportunities'
+      ? { label: 'UK Acquisition Pipeline', handler: () => setActiveSection('acquisition') }
+      : activeSection === 'brand-stores'
+      ? { label: 'Amazon UK Campaigns', handler: () => setActiveSection('campaigns') }
       : { label: 'New Product Concept', handler: handleOpenAddProduct };
 
   const renderSection = () => {
@@ -45,10 +61,19 @@ const WorkspaceShell: React.FC = () => {
           <DashboardView
             onOpenAddProduct={handleOpenAddProduct}
             onOpenAddCampaign={handleOpenAddCampaign}
+            onOpenAddTalent={handleOpenAddTalent}
           />
         );
       case 'profile':
-        return <ProfileView />;
+        return <ProfileView openAddTalentSignal={addTalentSignal} />;
+      case 'brands':
+        return <BrandsDiscoveryView />;
+      case 'uk-opportunities':
+        return <UkOpportunitiesView />;
+      case 'acquisition':
+        return <AcquisitionView />;
+      case 'brand-stores':
+        return <BrandStoreView />;
       case 'concepts':
         return <ProductsView openAddSignal={addProductSignal} />;
       case 'development':
@@ -78,6 +103,7 @@ const WorkspaceShell: React.FC = () => {
           <DashboardView
             onOpenAddProduct={handleOpenAddProduct}
             onOpenAddCampaign={handleOpenAddCampaign}
+            onOpenAddTalent={handleOpenAddTalent}
           />
         );
     }
@@ -98,12 +124,12 @@ const WorkspaceShell: React.FC = () => {
           <div className="bg-zinc-900 text-zinc-200 px-4 sm:px-6 lg:px-8 py-2 text-xs flex flex-wrap items-center justify-between gap-2 border-b border-zinc-800">
             <p>
               <strong className="text-white font-semibold">
-                Proposed CAA Talent Commerce Demonstration
+                CAA × Mercenta Commercial Intelligence &amp; UK Wholesale Platform
               </strong>{' '}
-              — Built exclusively around iShowSpeed (Darren Watkins Jr.). All concepts, campaigns, orders, and royalty rates are illustrative only.
+              — International research feeds Amazon UK (£ GBP) wholesale evaluation, acquisition governance &amp; storefront execution.
             </p>
             <span className="text-zinc-400 whitespace-nowrap">
-              Technology & Operations Concept by Mercenta
+              Mercenta Partners Ltd · Amazon UK Only
             </span>
           </div>
         )}
@@ -114,14 +140,14 @@ const WorkspaceShell: React.FC = () => {
 
         <footer className="border-t border-zinc-200 bg-white px-4 sm:px-6 lg:px-8 py-4 text-xs text-zinc-500 flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <span className="font-semibold text-zinc-900">CAA</span>
+            <span className="font-semibold text-zinc-900">CAA × Mercenta</span>
             <span aria-hidden="true">·</span>
-            <span>iShowSpeed Talent Commerce Proof of Concept</span>
+            <span>Talent Commercial Intelligence &amp; UK Wholesale Distribution Workspace</span>
           </div>
           <div className="flex items-center gap-3">
-            <span>Powered by Mercenta</span>
+            <span>Target Sales Market: Amazon UK (£ GBP)</span>
             <span aria-hidden="true">·</span>
-            <span>Illustrative Demonstration Workspace</span>
+            <span>Interactive Demonstration Environment</span>
           </div>
         </footer>
       </div>

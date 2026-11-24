@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Check, Download, Eye, FileDown, Megaphone, Palette, Sparkles, Trash2, Upload } from 'lucide-react';
+import { Check, Download, Eye, FileDown, Megaphone, Palette, Shirt, Sparkles, Trash2, Upload } from 'lucide-react';
 import { CreativeAsset } from '../../types/commerce';
 import { MediaFrame } from '../common/MediaFrame';
 
@@ -7,6 +7,7 @@ interface AssetsLibraryProps {
   assets: CreativeAsset[];
   onInspectAsset: (asset: CreativeAsset) => void;
   onUseInCampaigns: () => void;
+  onMockupInStudio?: (asset: CreativeAsset) => void;
   onDeleteAsset?: (assetId: string) => void;
   onOpenUpload?: () => void;
   onOpenGenerateAi?: () => void;
@@ -54,6 +55,7 @@ export const AssetsLibrary: React.FC<AssetsLibraryProps> = ({
   assets,
   onInspectAsset,
   onUseInCampaigns,
+  onMockupInStudio,
   onDeleteAsset,
   onOpenUpload,
   onOpenGenerateAi,
@@ -332,6 +334,17 @@ export const AssetsLibrary: React.FC<AssetsLibraryProps> = ({
                   {asset.dimensions}
                 </span>
                 <div className="flex items-center gap-1.5 shrink-0">
+                  {onMockupInStudio && (!asset.mediaType || asset.mediaType === 'image') && (
+                    <button
+                      type="button"
+                      onClick={() => onMockupInStudio(asset)}
+                      aria-label={`Mockup ${asset.title} in Live Studio`}
+                      title="Mockup in Live Studio"
+                      className="p-1.5 text-zinc-700 hover:text-[#BC1F2F] hover:border-[#BC1F2F] border border-zinc-200 bg-white rounded transition-colors"
+                    >
+                      <Shirt className="w-3.5 h-3.5" />
+                    </button>
+                  )}
                   {onDeleteAsset && (
                     <button
                       type="button"

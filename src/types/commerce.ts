@@ -1,10 +1,14 @@
 export type NavSectionId =
   | 'dashboard'
   | 'profile'
+  | 'brands'
+  | 'uk-opportunities'
+  | 'acquisition'
+  | 'campaigns'
+  | 'brand-stores'
   | 'concepts'
   | 'development'
   | 'collections'
-  | 'campaigns'
   | 'assets'
   | 'approvals'
   | 'purchase-orders'
@@ -35,6 +39,264 @@ export type ApprovalStatus =
   | 'Approved'
   | 'Changes Requested'
   | 'Rejected';
+
+// ---------------------------------------------------------------------------
+// Commercial Intelligence, Roster, Discovery & UK Wholesale Opportunity Types
+// ---------------------------------------------------------------------------
+export type TalentVertical =
+  | 'Film & TV'
+  | 'Sports'
+  | 'Digital Creators'
+  | 'Music'
+  | 'Podcasts & Media';
+
+export type CaaRepresentationStatus =
+  | 'Verified Publicly'
+  | 'Reported / Unconfirmed'
+  | 'Requires Verification'
+  | 'Historical / Unclear'
+  | 'Unknown';
+
+export type VerificationTier =
+  | 'Verified Fact'
+  | 'Publicly Reported'
+  | 'Inference'
+  | 'Unverified'
+  | 'Demonstration Data';
+
+export type ConfidenceLevel = 'High' | 'Medium' | 'Low';
+
+export interface SourceVerificationStamp {
+  id: string;
+  sourceName: string;
+  sourceUrl: string;
+  dateChecked: string;
+  evidenceSummary: string;
+  verificationTier: VerificationTier;
+  confidence: ConfidenceLevel;
+  unknownFields: string[];
+  notes?: string;
+}
+
+export type CommercialRelationshipType =
+  | 'Owned Business'
+  | 'Founder'
+  | 'Co-Owned'
+  | 'Talent-Authorised'
+  | 'Licensed'
+  | 'Endorsement'
+  | 'Sponsorship'
+  | 'Collaboration'
+  | 'Merchandise'
+  | 'Historical'
+  | 'Business Interest';
+
+export type UkOpportunityType =
+  | 'Type A — No UK Presence'
+  | 'Type B — 3P / Unauthorised UK Sellers'
+  | 'Type C — Amazon UK Present, Unclear Wholesale'
+  | 'Type D — UK DTC Site Only, No Amazon UK'
+  | 'Type E — Partial / Limited UK Catalogue'
+  | 'Type F — Existing UK Distributor (Caution)'
+  | 'Type G — Unsuitable / UK Market Barriers';
+
+export type UkWholesaleRouteStatus =
+  | 'Route Unclear'
+  | 'Direct Brand Contact'
+  | 'CAA Relationship Intro'
+  | 'Wholesale Authorised'
+  | 'Existing UK Distributor'
+  | 'Blocked / Unsuitable';
+
+export interface ScoreFactor {
+  key: string;
+  label: string;
+  score: number;
+  maxScore: number;
+  rationale: string;
+}
+
+export interface ScoreBreakdown {
+  total: number;
+  priorityTier: 'High Priority' | 'Medium Priority' | 'Watchlist' | 'Hold / Low';
+  factors: ScoreFactor[];
+  supportingEvidence: string[];
+  missingInformation: string[];
+  keyRisks: string[];
+  recommendedNextAction: string;
+}
+
+export interface TalentProfileRecord {
+  id: string;
+  name: string;
+  slug: string;
+  vertical: TalentVertical;
+  roleSummary: string;
+  primaryMarket: string;
+  portraitUrl?: string;
+  portraitCredit?: string;
+  monogramInitials: string;
+  monogramAccent: string;
+  caaStatus: CaaRepresentationStatus;
+  identityCheckRequired?: boolean;
+  identityCheckNote?: string;
+  discoveryStatus: 'Completed' | 'Pending Review' | 'Draft';
+  discoveryLastRun?: string;
+  portfolioSummary: string;
+  verification: SourceVerificationStamp;
+  notes?: string;
+}
+
+export interface TalentBrandRelationship {
+  id: string;
+  talentId: string;
+  brandId: string;
+  relationshipType: CommercialRelationshipType;
+  isCurrent: boolean;
+  ukDistributionRightsConfirmed: 'Confirmed' | 'Unconfirmed' | 'Not Included';
+  summary: string;
+  verification: SourceVerificationStamp;
+}
+
+export interface BrandRecord {
+  id: string;
+  name: string;
+  normalizedName: string;
+  category: string;
+  originCountry: string;
+  websiteUrl: string;
+  logoUrl?: string;
+  imageUrl?: string;
+  imageCredit?: string;
+  description: string;
+  ukWholesaleRouteStatus: UkWholesaleRouteStatus;
+  distributorNote?: string;
+  verification: SourceVerificationStamp;
+}
+
+export interface DiscoveredProduct {
+  id: string;
+  brandId: string;
+  title: string;
+  category: string;
+  variantSummary: string;
+  skuOrRef?: string;
+  asinUs?: string;
+  asinUk?: string;
+  image?: string;
+  imageCredit?: string;
+  officialUrl: string;
+  ukRrpGBP?: number;
+  usPriceUSD?: number;
+  summary: string;
+  verification: SourceVerificationStamp;
+}
+
+export type InternationalMarketCode =
+  | 'US'
+  | 'CA'
+  | 'AU'
+  | 'DE'
+  | 'FR'
+  | 'Official Brand DTC';
+
+export interface InternationalListing {
+  id: string;
+  brandId: string;
+  productId?: string;
+  market: InternationalMarketCode;
+  presenceStatus: 'Active Official' | '3P Sellers Active' | 'Limited Selection' | 'Not Found';
+  currency: string;
+  observedPrice?: number;
+  sellerType: string;
+  url: string;
+  verification: SourceVerificationStamp;
+}
+
+export interface UkMarketAssessment {
+  id: string;
+  brandId: string;
+  productId?: string;
+  opportunityType: UkOpportunityType;
+  amazonUkPresence:
+    | 'Not Present'
+    | '3P Sellers Only'
+    | 'Limited Official Range'
+    | 'Brand Store Live';
+  ukDtcPresence: 'Yes — UK DTC Live' | 'No UK DTC' | 'Unknown';
+  existingDistributorDetected: boolean;
+  estimatedGapSummary: string;
+  complianceOrBarrierNote?: string;
+  verification: SourceVerificationStamp;
+}
+
+export type AcquisitionRoute =
+  | 'Route 1 — Relationship-Led'
+  | 'Route 2 — Talent-Owned / Authorised';
+
+export type AcquisitionStage =
+  | 'Discovery'
+  | 'Evidence & Verification'
+  | 'CAA Liaison / Intro Requested'
+  | 'UK Wholesale Permission Review'
+  | 'Commercial Terms & Onboarding'
+  | 'Amazon UK Ready'
+  | 'On Hold / Unsuitable';
+
+export interface AcquisitionChecklistItem {
+  label: string;
+  done: boolean;
+}
+
+export interface AcquisitionWorkflow {
+  id: string;
+  brandId: string;
+  primaryTalentId: string;
+  route: AcquisitionRoute;
+  stage: AcquisitionStage;
+  wholesalePermissionConfirmed: boolean;
+  ownerNote: string;
+  nextStep: string;
+  updatedAt: string;
+  checklist: AcquisitionChecklistItem[];
+  verification: SourceVerificationStamp;
+}
+
+export interface BrandStoreModule {
+  id: string;
+  type:
+    | 'Hero Banner'
+    | 'Featured Collection'
+    | 'Best Sellers Grid'
+    | 'Brand Story & Talent'
+    | 'Comparison Strip';
+  title: string;
+  subtitle: string;
+  ctaLabel: string;
+  ctaTargetPage: string;
+  selectedProductIds: string[];
+  bannerImage: string;
+}
+
+export interface BrandStoreProject {
+  id: string;
+  code: string;
+  brandId: string;
+  talentId: string;
+  storeName: string;
+  amazonUkSlug: string;
+  headline: string;
+  subheadline: string;
+  heroImage: string;
+  navPages: string[];
+  modules: BrandStoreModule[];
+  assetIds: string[];
+  productIds: string[];
+  approvalStatus: ApprovalStatus;
+  simulatedPublished: boolean;
+  updatedAt: string;
+  notes: string;
+}
 
 // ---------------------------------------------------------------------------
 // White-Labeled Production Catalog Types (Zero Third-Party POD Branding)
@@ -125,7 +387,7 @@ export interface Collection {
 }
 
 // ---------------------------------------------------------------------------
-// Amazon UK Ads Structure & Campaigns (All 9 UK Ad Formats)
+// Amazon UK Ads Structure & Campaigns (All 9 UK Ad Formats + Store/A+/PDP)
 // ---------------------------------------------------------------------------
 export type AmazonAdType =
   | 'Sponsored Products'
@@ -137,6 +399,12 @@ export type AmazonAdType =
   | 'Amazon DSP Display'
   | 'Brand Store & Posts'
   | 'Amazon Audio Ads';
+
+export type CampaignCreativeCategory =
+  | 'Amazon Ads'
+  | 'Brand Store Banner'
+  | 'A+ Content Module'
+  | 'Amazon UK PDP Creative';
 
 export type AmazonTargetingType = 'AUTO' | 'MANUAL';
 export type AmazonSponsoredBrandsFormat = 'PRODUCT_COLLECTION' | 'STORE_SPOTLIGHT' | 'VIDEO';
@@ -180,6 +448,11 @@ export interface Campaign {
   code: string;
   name: string;
   objective: string;
+  talentId?: string;
+  brandId?: string;
+  creativeFormatCategory?: CampaignCreativeCategory;
+  relationshipVerifiedNote?: string;
+  wholesalePermissionConfirmed?: boolean;
   associatedProductIds: string[];
   creativeAssetIds: string[];
   heroImage: string;
@@ -219,6 +492,7 @@ export type ApprovalType =
   | 'Product Concept'
   | 'Product Design'
   | 'Campaign Creative'
+  | 'Brand Storefront'
   | 'Marketing Material'
   | 'Commercial Proposal';
 
@@ -246,7 +520,7 @@ export interface ApprovalItem {
   description: string;
   submissionDate: string;
   submittedBy: string;
-  linkedType: 'product' | 'campaign' | 'proposal';
+  linkedType: 'product' | 'campaign' | 'brand-store' | 'proposal';
   linkedId: string;
   linkedName: string;
   previewImage?: string;
@@ -355,7 +629,7 @@ export interface RoyaltyStatement {
 
 export interface ActivityEvent {
   id: string;
-  category: 'Product' | 'Campaign' | 'Approval' | 'Order' | 'Royalty';
+  category: 'Intelligence' | 'Acquisition' | 'Brand Store' | 'Product' | 'Campaign' | 'Approval' | 'Order' | 'Royalty';
   title: string;
   detail: string;
   actor: string;

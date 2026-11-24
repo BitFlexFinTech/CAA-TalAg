@@ -98,7 +98,7 @@ export const SettingsView: React.FC = () => {
           </h2>
         </div>
         <p className="text-xs text-zinc-600 leading-relaxed">
-          This interactive front-end prototype demonstrates how Mercenta Partners could operate a dedicated talent commerce workspace for CAA, centered exclusively on iShowSpeed (Darren Watkins Jr.). It does not imply an existing CAA–Mercenta partnership, an existing iShowSpeed merchandise agreement, approved products, live suppliers, or contractual financial terms.
+          This interactive prototype demonstrates how Mercenta Partners and CAA could collaborate on talent commercial intelligence, international marketplace discovery, UK market opportunity scoring (Amazon UK only, £ GBP), Route 1 &amp; Route 2 wholesale acquisition governance, Brand Storefront authoring, and UK operations. Inclusion on any talent roster list does not imply formal CAA representation verification, existing wholesale distribution rights, or contractual terms; unverified entries and historical relationships are explicitly labeled.
         </p>
       </section>
 
@@ -107,7 +107,7 @@ export const SettingsView: React.FC = () => {
         <div>
           <h2 className="text-sm font-semibold text-zinc-900">Reset Demonstration Dataset</h2>
           <p className="text-xs text-zinc-600 mt-0.5">
-            Restore all iShowSpeed products, campaigns, approvals, orders, and royalty assumptions to their initial state.
+            Restore all talent profiles, brand discoveries, UK assessments, acquisition workflows, Brand Storefronts, products, campaigns, approvals, orders, and royalty assumptions to their initial state.
           </p>
         </div>
         <button

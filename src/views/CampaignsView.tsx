@@ -1,6 +1,8 @@
 import React, { useMemo, useRef, useState } from 'react';
 import {
+  AlertTriangle,
   Calendar,
+  CheckCircle2,
   Code2,
   Eye,
   LayoutGrid,
@@ -9,6 +11,7 @@ import {
   Plus,
   Send,
   Sparkles,
+  Store,
 } from 'lucide-react';
 import { useCommerce } from '../context/CommerceContext';
 import { TALENT_PROFILE } from '../data/seedData';
@@ -18,10 +21,12 @@ import {
   AmazonDspSize,
   AmazonTargetingType,
   Campaign,
+  CampaignCreativeCategory,
   CampaignStatus,
 } from '../types/commerce';
 import { MediaFrame } from '../components/common/MediaFrame';
 import { StatusTag } from '../components/common/StatusTag';
+import { TalentAvatar } from '../components/common/TalentAvatar';
 import { Drawer } from '../components/common/Drawer';
 import { Modal } from '../components/common/Modal';
 import {
@@ -55,11 +60,27 @@ interface CampaignsViewProps {
   openAddSignal?: number;
 }
 
+const CREATIVE_FORMAT_CATEGORIES: CampaignCreativeCategory[] = [
+  'Amazon Ads',
+  'Brand Store Banner',
+  'A+ Content Module',
+  'Amazon UK PDP Creative',
+];
+
 export const CampaignsView: React.FC<CampaignsViewProps> = ({ openAddSignal }) => {
   const {
     campaigns,
     products,
     assets,
+    talents,
+    brands,
+    relationships,
+    discoveredProducts,
+    acquisitions,
+    selectedTalentId,
+    setSelectedTalentId,
+    selectedBrandId,
+    setSelectedBrandId,
     addCampaign,
     addGeneratedAsset,
     updateCampaignStatus,
@@ -71,6 +92,8 @@ export const CampaignsView: React.FC<CampaignsViewProps> = ({ openAddSignal }) =
   const studioRef = useRef<HTMLElement | null>(null);
 
   const [previewMode, setPreviewMode] = useState<'studio' | 'gallery'>('studio');
+  const [creativeCategory, setCreativeCategory] =
+    useState<CampaignCreativeCategory>('Amazon Ads');
   const [selectedAdType, setSelectedAdType] = useState<AmazonAdType>(
     campaigns[0]?.amazonAds.adType ?? 'Sponsored Brands — Product Collection'
   );
@@ -80,6 +103,46 @@ export const CampaignsView: React.FC<CampaignsViewProps> = ({ openAddSignal }) =
   const [showJsonPayload, setShowJsonPayload] = useState(false);
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [aiModalOpen, setAiModalOpen] = useState(false);
+
+  // Commercial Talent -> Brand -> Wholesale Gate context
+  const activeTalent = useMemo(
+    () => talents.find((t) => t.id === selectedTalentId) ?? talents[0],
+    [talents, selectedTalentId]
+  );
+
+  const talentBrands = useMemo(() => {
+    if (!activeTalent) return brands;
+    const relBrandIds = new Set(
+      relationships.filter((r) => r.talentId === activeTalent.id).map((r) => r.brandId)
+    );
+    const matched = brands.filter((b) => relBrandIds.has(b.id));
+    return matched.length > 0 ? matched : brands;
+  }, [activeTalent, relationships, brands]);
+
+  const activeBrand = useMemo(() => {
+    const bySelected = talentBrands.find((b) => b.id === selectedBrandId);
+    return bySelected ?? talentBrands[0] ?? brands[0];
+  }, [talentBrands, selectedBrandId, brands]);
+
+  const activeRelationship = useMemo(
+    () =>
+      relationships.find(
+        (r) => r.talentId === activeTalent?.id && r.brandId === activeBrand?.id
+      ) ?? null,
+    [relationships, activeTalent, activeBrand]
+  );
+
+  const activeAcquisition = useMemo(
+    () => acquisitions.find((a) => a.brandId === activeBrand?.id) ?? null,
+    [acquisitions, activeBrand]
+  );
+
+  const activeDiscoveredProducts = useMemo(
+    () => discoveredProducts.filter((dp) => dp.brandId === activeBrand?.id),
+    [discoveredProducts, activeBrand]
+  );
+
+  const isWholesaleAuthorized = Boolean(activeAcquisition?.wholesalePermissionConfirmed);
 
   React.useEffect(() => {
     if (openAddSignal && openAddSignal > 0) {
@@ -205,7 +268,14 @@ export const CampaignsView: React.FC<CampaignsViewProps> = ({ openAddSignal }) =
       name,
       objective:
         objective.trim() ||
-        `Amazon UK (${newAdType}) wholesale activation driving traffic to SP-API Vendor ASINs on amazon.co.uk.`,
+        `Amazon UK (${newAdType} · ${creativeCategory}) activation for ${activeBrand?.name || 'Talent Brand'} on amazon.co.uk.`,
+      talentId: activeTalent?.id,
+      brandId: activeBrand?.id,
+      creativeFormatCategory: creativeCategory,
+      relationshipVerifiedNote: activeRelationship
+        ? `${activeRelationship.relationshipType} (${activeRelationship.isCurrent ? 'Current' : 'Historical'} · UK Rights: ${activeRelationship.ukDistributionRightsConfirmed})`
+        : 'Commercial context selected in studio',
+      wholesalePermissionConfirmed: isWholesaleAuthorized,
       associatedProductIds: selectedProductIds,
       proposedStartDate: startDate,
       proposedEndDate: endDate,
@@ -225,8 +295,8 @@ export const CampaignsView: React.FC<CampaignsViewProps> = ({ openAddSignal }) =
         biddingStrategy: 'AUTO_FOR_SALES',
         adGroupName: adGroupName.trim() || 'UK_Default_AdGroup',
         defaultBidGBP: Math.max(0.1, Number(defaultBidGBP) || 0.65),
-        headline: headline.trim().slice(0, 50) || 'Official iShowSpeed UK Drop',
-        brandName: 'iShowSpeed Official',
+        headline: headline.trim().slice(0, 50) || `Official ${activeBrand?.name || 'UK'} Drop`,
+        brandName: activeBrand?.name || 'Official Talent Brand',
         sbFormat:
           newAdType === 'Sponsored Brands — Store Spotlight'
             ? 'STORE_SPOTLIGHT'
@@ -239,7 +309,10 @@ export const CampaignsView: React.FC<CampaignsViewProps> = ({ openAddSignal }) =
         dspSize: newAdType === 'Amazon DSP Display' ? newDspSize : undefined,
         tvFormat: newAdType === 'Sponsored TV' ? '15s Streaming Spot' : undefined,
         audioLength: newAdType === 'Amazon Audio Ads' ? '15s Alexa Spot' : undefined,
-        storeSlug: newAdType === 'Brand Store & Posts' ? 'amazon.co.uk/ishowspeed' : undefined,
+        storeSlug:
+          newAdType === 'Brand Store & Posts'
+            ? `amazon.co.uk/${(activeBrand?.name || 'brand').toLowerCase().replace(/[^a-z0-9]+/g, '')}`
+            : undefined,
         keywords: keywordsText
           .split(',')
           .map((k) => k.trim())
@@ -320,17 +393,25 @@ export const CampaignsView: React.FC<CampaignsViewProps> = ({ openAddSignal }) =
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="text-xs font-medium text-[#BC1F2F] mb-1">
-            Full 9-Format Amazon UK Ads Suite · Wholesale SP-API ASIN Integration
+            Amazon UK Creative Suite · Talent → Brand → Wholesale Authorisation Linked
           </p>
           <h1 className="text-2xl font-bold tracking-tight text-zinc-900">
-            iShowSpeed Amazon UK Campaigns & Live Ad Previews
+            Amazon UK Campaigns & Creative Preview Studio
           </h1>
           <p className="text-sm text-zinc-600 mt-1">
-            Inspect live visual mockups for every Amazon UK ad format above the fold, or generate complete multi-format campaigns using AI.
+            Select a CAA talent &amp; brand, verify UK wholesale authorisation, and preview live Amazon UK ads, Store Banners, A+ Content, and PDP creatives.
           </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setActiveSection('brand-stores')}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-medium text-zinc-800 bg-white border border-zinc-300 hover:bg-zinc-100 rounded transition-colors whitespace-nowrap shrink-0"
+          >
+            <Store className="w-3.5 h-3.5 text-[#BC1F2F]" />
+            <span>Open Brand Store Studio</span>
+          </button>
           <button
             type="button"
             onClick={() => setAddModalOpen(true)}
@@ -349,6 +430,113 @@ export const CampaignsView: React.FC<CampaignsViewProps> = ({ openAddSignal }) =
           </button>
         </div>
       </div>
+
+      {/* Commercial Intelligence Context & UK Wholesale Permission Gate */}
+      <section
+        aria-label="Talent Brand Commercial Relationship Gate"
+        className="bg-white border border-zinc-200 rounded-md p-4 space-y-3"
+      >
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
+          <div className="md:col-span-4">
+            <label className="block text-[11px] font-medium text-zinc-600 mb-1">
+              CAA Talent Context
+            </label>
+            <div className="flex items-center gap-2">
+              {activeTalent && <TalentAvatar talent={activeTalent} size="sm" />}
+              <select
+                value={activeTalent?.id ?? ''}
+                onChange={(e) => {
+                  setSelectedTalentId(e.target.value);
+                  setSelectedBrandId(null);
+                }}
+                className="flex-1 min-w-0 px-2.5 py-1.5 text-xs border border-zinc-300 rounded bg-white font-medium"
+              >
+              {talents.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.name} ({t.vertical})
+                </option>
+              ))}
+              </select>
+            </div>
+          </div>
+          <div className="md:col-span-4">
+            <label className="block text-[11px] font-medium text-zinc-600 mb-1">
+              Associated Brand ({talentBrands.length})
+            </label>
+            <select
+              value={activeBrand?.id ?? ''}
+              onChange={(e) => setSelectedBrandId(e.target.value)}
+              className="w-full px-2.5 py-1.5 text-xs border border-zinc-300 rounded bg-white font-medium"
+            >
+              {talentBrands.map((b) => (
+                <option key={b.id} value={b.id}>
+                  {b.name} · {b.category}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="md:col-span-4">
+            <label className="block text-[11px] font-medium text-zinc-600 mb-1">
+              Creative Format Category
+            </label>
+            <div className="grid grid-cols-2 gap-1">
+              {CREATIVE_FORMAT_CATEGORIES.map((cat) => (
+                <button
+                  key={cat}
+                  type="button"
+                  onClick={() => setCreativeCategory(cat)}
+                  className={`px-2 py-1.5 text-[11px] rounded border transition-colors truncate ${
+                    creativeCategory === cat
+                      ? 'bg-zinc-900 text-white border-zinc-900 font-medium'
+                      : 'bg-zinc-50 text-zinc-700 border-zinc-200 hover:border-zinc-400'
+                  }`}
+                >
+                  {cat}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div
+          className={`px-3.5 py-2.5 rounded border text-xs flex flex-wrap items-center justify-between gap-2 ${
+            isWholesaleAuthorized
+              ? 'bg-emerald-50 border-emerald-200 text-emerald-900'
+              : 'bg-amber-50 border-amber-200 text-amber-900'
+          }`}
+        >
+          <div className="flex items-start sm:items-center gap-2">
+            {isWholesaleAuthorized ? (
+              <CheckCircle2 className="w-4 h-4 text-emerald-700 shrink-0 mt-0.5 sm:mt-0" />
+            ) : (
+              <AlertTriangle className="w-4 h-4 text-amber-700 shrink-0 mt-0.5 sm:mt-0" />
+            )}
+            <span>
+              <strong>{activeBrand?.name}</strong> — Relationship:{' '}
+              <span className="font-semibold">
+                {activeRelationship?.relationshipType || 'Unlinked'} (
+                {activeRelationship
+                  ? `${activeRelationship.isCurrent ? 'Current' : 'Historical'} · UK Rights: ${activeRelationship.ukDistributionRightsConfirmed}`
+                  : 'Unconfirmed'}
+                )
+              </span>
+              .{' '}
+              {isWholesaleAuthorized
+                ? 'Written UK wholesale permission confirmed in Brand Acquisition.'
+                : 'Written UK wholesale permission is NOT yet confirmed. Preview outputs are for pitch/concept review only.'}
+            </span>
+          </div>
+          {!isWholesaleAuthorized && (
+            <button
+              type="button"
+              onClick={() => setActiveSection('acquisition')}
+              className="px-2.5 py-1 text-[11px] font-semibold bg-white border border-amber-300 text-amber-900 hover:bg-amber-100 rounded whitespace-nowrap"
+            >
+              Verify in Brand Acquisition
+            </button>
+          )}
+        </div>
+      </section>
 
       {/* SECTION 1 (TOP): Live Amazon UK Ad Visual Preview Studio */}
       <section
@@ -619,11 +807,121 @@ export const CampaignsView: React.FC<CampaignsViewProps> = ({ openAddSignal }) =
                 )}
               </div>
 
-              <AmazonAdPreviewCanvas
-                campaign={effectiveStudioCampaign}
-                products={products}
-                assets={assets}
-              />
+              {creativeCategory === 'Amazon Ads' ? (
+                <AmazonAdPreviewCanvas
+                  campaign={effectiveStudioCampaign}
+                  products={products}
+                  assets={assets}
+                />
+              ) : creativeCategory === 'Brand Store Banner' ? (
+                <div className="border border-zinc-200 rounded-md overflow-hidden bg-zinc-950 text-white">
+                  <div className="px-4 py-2 bg-zinc-900 border-b border-zinc-800 flex items-center justify-between text-[11px] text-zinc-400">
+                    <span>Amazon UK Brand Storefront Hero · amazon.co.uk/stores/{(activeBrand?.name || 'brand').toLowerCase().replace(/[^a-z0-9]+/g, '')}</span>
+                    <span className="font-mono-tabular text-zinc-300">3000 × 600 px</span>
+                  </div>
+                  <div className="relative p-6 min-h-[210px] flex items-center justify-between gap-4 bg-gradient-to-r from-zinc-950 via-zinc-900 to-[#3a0a10]">
+                    <div className="space-y-2 max-w-md">
+                      <span className="text-[10px] uppercase tracking-wider font-semibold text-amber-300">
+                        {activeBrand?.name} · Official UK Brand Store Banner
+                      </span>
+                      <h3 className="text-xl font-bold leading-snug">
+                        {effectiveStudioCampaign.amazonAds.headline}
+                      </h3>
+                      <p className="text-xs text-zinc-300">
+                        Authorised UK Prime fulfilment · Explore verified {activeBrand?.category} essentials.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => setActiveSection('brand-stores')}
+                        className="mt-1 inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#BC1F2F] text-white text-xs font-medium rounded"
+                      >
+                        <Store className="w-3.5 h-3.5" />
+                        <span>Edit Full Brand Storefront</span>
+                      </button>
+                    </div>
+                    {effectiveStudioCampaign.heroImage && (
+                      <img
+                        src={effectiveStudioCampaign.heroImage}
+                        alt={activeBrand?.name || 'Brand banner'}
+                        referrerPolicy="no-referrer"
+                        className="w-36 h-36 rounded object-cover border border-white/15 shrink-0"
+                      />
+                    )}
+                  </div>
+                </div>
+              ) : creativeCategory === 'A+ Content Module' ? (
+                <div className="border border-zinc-200 rounded-md overflow-hidden bg-white">
+                  <div className="px-4 py-2 bg-zinc-100 border-b border-zinc-200 flex items-center justify-between text-[11px] text-zinc-600">
+                    <span>Amazon UK A+ Content Editorial Module (Standard Brand Story + Comparison)</span>
+                    <span className="font-mono-tabular">970 × 600 px</span>
+                  </div>
+                  <div className="p-5 grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+                    <div className="md:col-span-2 space-y-2">
+                      <p className="text-[11px] font-semibold text-[#BC1F2F] uppercase">
+                        {activeBrand?.name} · UK Vendor Central A+ Module
+                      </p>
+                      <h3 className="text-base font-bold text-zinc-900">
+                        {effectiveStudioCampaign.amazonAds.headline}
+                      </h3>
+                      <p className="text-xs text-zinc-600 leading-relaxed">
+                        Talent-verified authenticity paired with Amazon UK Prime next-day delivery and Mercenta local customer care.
+                      </p>
+                      <div className="grid grid-cols-3 gap-2 pt-2">
+                        {(activeDiscoveredProducts.length > 0
+                          ? activeDiscoveredProducts.slice(0, 3).map((dp) => dp.title)
+                          : ['Flagship UK SKU', 'Prime Multipack', 'Collector Edition']
+                        ).map((itemTitle) => (
+                          <div key={itemTitle} className="p-2 bg-zinc-50 border border-zinc-200 rounded text-[11px] font-medium text-zinc-800 truncate">
+                            {itemTitle}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="aspect-square bg-zinc-950 rounded overflow-hidden flex items-center justify-center p-2">
+                      <img
+                        src={effectiveStudioCampaign.heroImage}
+                        alt={activeBrand?.name || 'A+ Module'}
+                        referrerPolicy="no-referrer"
+                        className="w-full h-full object-cover rounded-xs"
+                      />
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="border border-zinc-200 rounded-md overflow-hidden bg-white">
+                  <div className="px-4 py-2 bg-zinc-100 border-b border-zinc-200 flex items-center justify-between text-[11px] text-zinc-600">
+                    <span>Amazon UK Product Detail Page (PDP) Creative · amazon.co.uk (£ GBP)</span>
+                    <span className="font-mono-tabular">2000 × 2000 Main + Infographics</span>
+                  </div>
+                  <div className="p-5 grid grid-cols-1 sm:grid-cols-12 gap-4 items-start">
+                    <div className="sm:col-span-5 aspect-square bg-zinc-50 border border-zinc-200 rounded flex items-center justify-center p-3">
+                      <img
+                        src={effectiveStudioCampaign.heroImage}
+                        alt={activeBrand?.name || 'PDP Main'}
+                        referrerPolicy="no-referrer"
+                        className="w-full h-full object-contain"
+                      />
+                    </div>
+                    <div className="sm:col-span-7 space-y-2 text-xs">
+                      <p className="text-[#007185] font-medium">
+                        Visit the {activeBrand?.name} Store on Amazon.co.uk
+                      </p>
+                      <h3 className="text-base font-semibold text-zinc-900">
+                        {activeDiscoveredProducts[0]?.title || effectiveStudioCampaign.amazonAds.headline}
+                      </h3>
+                      <p className="text-lg font-bold font-mono-tabular text-zinc-900">
+                        £{(products[0]?.proposedRetail ?? 29.99).toFixed(2)}{' '}
+                        <span className="text-[11px] font-normal text-[#007185]">FREE UK Prime Delivery</span>
+                      </p>
+                      <ul className="list-disc pl-4 space-y-1 text-zinc-600">
+                        <li>Official UK wholesale stock distributed via Mercenta Partners</li>
+                        <li>{activeTalent?.name} {activeRelationship?.relationshipType || 'Brand'} Edition</li>
+                        <li>UK regulatory compliance &amp; EAN/GTIN barcode verified</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {showJsonPayload && (
                 <div className="bg-zinc-950 text-zinc-200 rounded p-4 overflow-x-auto">
@@ -1171,11 +1469,22 @@ export const CampaignsView: React.FC<CampaignsViewProps> = ({ openAddSignal }) =
         onClose={() => setAiModalOpen(false)}
         products={products}
         assets={assets}
+        activeTalentName={activeTalent?.name}
+        activeBrandName={activeBrand?.name}
         onCreateGeneratedSuite={({ creativeAsset, campaigns: generatedList }) => {
           addGeneratedAsset(creativeAsset);
           let firstCreated: Campaign | null = null;
           generatedList.forEach((cmpInput) => {
-            const created = addCampaign(cmpInput);
+            const created = addCampaign({
+              ...cmpInput,
+              talentId: activeTalent?.id,
+              brandId: activeBrand?.id,
+              creativeFormatCategory: creativeCategory,
+              relationshipVerifiedNote: activeRelationship
+                ? `${activeRelationship.relationshipType} (${activeRelationship.isCurrent ? 'Current' : 'Historical'} · UK Rights: ${activeRelationship.ukDistributionRightsConfirmed})`
+                : undefined,
+              wholesalePermissionConfirmed: isWholesaleAuthorized,
+            });
             if (!firstCreated) firstCreated = created;
           });
           if (firstCreated) {

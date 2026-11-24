@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Download, Film, Music, Plus, Search, Sparkles, Trash2, Upload } from 'lucide-react';
+import { Download, Film, Music, Plus, Search, Shirt, Sparkles, Trash2, Upload } from 'lucide-react';
 import { useCommerce } from '../context/CommerceContext';
 import { CreativeAsset } from '../types/commerce';
 import { MediaFrame } from '../components/common/MediaFrame';
@@ -17,7 +17,8 @@ const ASSET_TYPES: ('All' | CreativeAsset['assetType'])[] = [
 ];
 
 export const AssetsView: React.FC = () => {
-  const { assets, addGeneratedAsset, deleteAsset, setActiveSection } = useCommerce();
+  const { assets, addGeneratedAsset, deleteAsset, setActiveSection, openLiveMockupStudio } =
+    useCommerce();
   const [typeFilter, setTypeFilter] = useState<'All' | CreativeAsset['assetType']>('All');
   const [search, setSearch] = useState('');
   const [activeAsset, setActiveAsset] = useState<CreativeAsset | null>(null);
@@ -139,6 +140,7 @@ export const AssetsView: React.FC = () => {
         assets={assets}
         onInspectAsset={setActiveAsset}
         onUseInCampaigns={() => setActiveSection('campaigns')}
+        onMockupInStudio={(asset) => openLiveMockupStudio(asset.src)}
         onDeleteAsset={(id) => {
           deleteAsset(id);
           if (activeAsset?.id === id) setActiveAsset(null);
@@ -320,7 +322,7 @@ export const AssetsView: React.FC = () => {
                 <p className="font-medium text-zinc-900 mt-0.5">{activeAsset.usageScope}</p>
               </div>
             </div>
-            <div className="flex items-center justify-between gap-2 pt-2 border-t border-zinc-200">
+            <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-zinc-200">
               <button
                 type="button"
                 onClick={() => {
@@ -332,14 +334,30 @@ export const AssetsView: React.FC = () => {
                 <Trash2 className="w-3.5 h-3.5" />
                 <span>Delete Asset</span>
               </button>
-              <button
-                type="button"
-                onClick={() => triggerAssetDownload(activeAsset)}
-                className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-medium text-white bg-zinc-900 hover:bg-[#BC1F2F] rounded transition-colors whitespace-nowrap shrink-0"
-              >
-                <Download className="w-3.5 h-3.5" />
-                <span>Download File</span>
-              </button>
+              <div className="flex items-center gap-2">
+                {(!activeAsset.mediaType || activeAsset.mediaType === 'image') && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const src = activeAsset.src;
+                      setActiveAsset(null);
+                      openLiveMockupStudio(src);
+                    }}
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-medium text-white bg-[#BC1F2F] hover:bg-[#9E1927] rounded transition-colors whitespace-nowrap shrink-0"
+                  >
+                    <Shirt className="w-3.5 h-3.5" />
+                    <span>Mockup in Studio</span>
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => triggerAssetDownload(activeAsset)}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-medium text-white bg-zinc-900 hover:bg-[#BC1F2F] rounded transition-colors whitespace-nowrap shrink-0"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  <span>Download File</span>
+                </button>
+              </div>
             </div>
           </div>
         )}

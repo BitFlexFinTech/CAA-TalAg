@@ -10,6 +10,7 @@ const APPROVAL_TYPES: ('All' | ApprovalType)[] = [
   'Product Concept',
   'Product Design',
   'Campaign Creative',
+  'Brand Storefront',
   'Marketing Material',
   'Commercial Proposal',
 ];
@@ -69,10 +70,10 @@ export const ApprovalsView: React.FC = () => {
             CAA & Talent Sign-Off Workflow · Synchronized Across Records
           </p>
           <h1 className="text-2xl font-bold tracking-tight text-zinc-900">
-            iShowSpeed Approval Centre
+            CAA × Mercenta Approval Centre
           </h1>
           <p className="text-sm text-zinc-600 mt-1">
-            Review product concepts, designs, campaign creative, marketing materials, and commercial proposals.
+            Review product concepts, designs, Amazon UK Brand Storefronts, campaign creative, and commercial proposals.
           </p>
         </div>
         <div className="text-xs text-zinc-600 bg-white border border-zinc-200 rounded px-3 py-2">

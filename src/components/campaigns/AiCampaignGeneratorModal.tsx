@@ -14,6 +14,8 @@ interface AiCampaignGeneratorModalProps {
   onClose: () => void;
   products: ProductConcept[];
   assets: CreativeAsset[];
+  activeTalentName?: string;
+  activeBrandName?: string;
   onCreateGeneratedSuite: (payload: {
     creativeAsset: Omit<CreativeAsset, 'id' | 'dateAdded'>;
     campaigns: Array<{
@@ -57,22 +59,27 @@ function loadImgSafe(src: string): Promise<HTMLImageElement | null> {
   });
 }
 
-function buildShortHeadline(prompt: string, adType: AmazonAdType, prodName: string): string {
+function buildShortHeadline(
+  prompt: string,
+  adType: AmazonAdType,
+  prodName: string,
+  brandName = 'iShowSpeed Official'
+): string {
   const lower = prompt.toLowerCase();
   const base =
     lower.includes('hoodie') || lower.includes('fleece')
-      ? 'Official SPEED Heavyweight Fleece UK'
+      ? `Official ${brandName} Fleece UK`
       : lower.includes('collector') || lower.includes('sculpture')
-      ? 'iShowSpeed Collector Edition UK'
+      ? `${brandName} Collector Edition UK`
       : lower.includes('cap') || lower.includes('trucker')
-      ? 'Speed FC Headwear & Kit Drop UK'
-      : 'Official Speed FC UK Prime Drop';
+      ? `${brandName} Headwear & Kit UK`
+      : `Official ${brandName} UK Prime Drop`;
 
   if (adType === 'Amazon Audio Ads') {
-    return 'Say "Alexa, Shop iShowSpeed UK"'.slice(0, 50);
+    return `Say "Alexa, Shop ${brandName} UK"`.slice(0, 50);
   }
   if (adType === 'Brand Store & Posts') {
-    return 'Explore Official iShowSpeed UK Store'.slice(0, 50);
+    return `Explore Official ${brandName} UK Store`.slice(0, 50);
   }
   if (adType === 'Sponsored TV') {
     return `${base} · Out Now`.slice(0, 50);
@@ -253,8 +260,12 @@ export const AiCampaignGeneratorModal: React.FC<AiCampaignGeneratorModalProps> =
   onClose,
   products,
   assets,
+  activeTalentName,
+  activeBrandName,
   onCreateGeneratedSuite,
 }) => {
+  const resolvedBrand = activeBrandName || 'iShowSpeed Official';
+  const resolvedSlug = resolvedBrand.toLowerCase().replace(/[^a-z0-9]+/g, '');
   const [prompt, setPrompt] = useState(CAMPAIGN_QUICK_PROMPTS[0]);
   const [selectedAdTypes, setSelectedAdTypes] = useState<AmazonAdType[]>([
     'Sponsored Products',
@@ -314,13 +325,18 @@ export const AiCampaignGeneratorModal: React.FC<AiCampaignGeneratorModalProps> =
       const asins = useProds.map((p) => p.amazonAsinDemo || p.sku);
 
       const built: Campaign[] = selectedAdTypes.map((adType, idx) => {
-        const headline = buildShortHeadline(prompt, adType, useProds[0]?.name || 'iShowSpeed UK Merch');
+        const headline = buildShortHeadline(
+          prompt,
+          adType,
+          useProds[0]?.name || `${resolvedBrand} UK`,
+          resolvedBrand
+        );
         const tag = AD_TEMPLATES.find((t) => t.type === adType)?.code || 'UK';
         return {
           id: `ai-preview-${idx}`,
           code: `AI-UK-${tag}`,
-          name: `AI · ${adType} — ${useProds[0]?.name.split(' ').slice(0, 3).join(' ') || 'Speed UK'}`,
-          objective: `AI-generated ${adType} campaign from brief: "${prompt.trim()}"`,
+          name: `AI · ${resolvedBrand} · ${adType}`,
+          objective: `AI-generated ${adType} campaign (${activeTalentName ? `${activeTalentName} / ` : ''}${resolvedBrand}) from brief: "${prompt.trim()}"`,
           associatedProductIds: useProds.map((p) => p.id),
           creativeAssetIds: uploadedLogo ? [uploadedLogo.id] : [],
           heroImage: dataUrl,
@@ -346,7 +362,7 @@ export const AiCampaignGeneratorModal: React.FC<AiCampaignGeneratorModalProps> =
             adGroupName: `AI_${tag}_UK_${nextSeed}`,
             defaultBidGBP: adType === 'Sponsored Display' ? 0.65 : 0.85,
             headline,
-            brandName: 'iShowSpeed Official',
+            brandName: resolvedBrand,
             sbFormat:
               adType === 'Sponsored Brands — Store Spotlight'
                 ? 'STORE_SPOTLIGHT'
@@ -359,7 +375,7 @@ export const AiCampaignGeneratorModal: React.FC<AiCampaignGeneratorModalProps> =
             dspSize: adType === 'Amazon DSP Display' ? '970x250' : undefined,
             tvFormat: adType === 'Sponsored TV' ? '15s Streaming Spot' : undefined,
             audioLength: adType === 'Amazon Audio Ads' ? '15s Alexa Spot' : undefined,
-            storeSlug: adType === 'Brand Store & Posts' ? 'amazon.co.uk/ishowspeed' : undefined,
+            storeSlug: adType === 'Brand Store & Posts' ? `amazon.co.uk/${resolvedSlug}` : undefined,
             keywords,
             advertisedAsins: asins,
             customMediaUrl: dataUrl,

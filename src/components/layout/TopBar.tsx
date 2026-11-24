@@ -4,12 +4,16 @@ import { useCommerce } from '../../context/CommerceContext';
 import { NavSectionId } from '../../types/commerce';
 
 const SECTION_TITLES: Record<NavSectionId, string> = {
-  dashboard: 'Overview',
-  profile: 'iShowSpeed Profile',
-  concepts: 'Product Concepts',
+  dashboard: 'Commercial Intelligence Dashboard',
+  profile: 'Talent Directory & Discovery',
+  brands: 'Brands, Products & International Research',
+  'uk-opportunities': 'UK Market Opportunities (Types A–G)',
+  acquisition: 'Brand Acquisition & Authorisation',
+  campaigns: 'Amazon UK Campaigns',
+  'brand-stores': 'Amazon Brand Store Studio',
+  concepts: 'Product Concepts & Live Mockup Studio',
   development: 'Product Development',
   collections: 'Collections',
-  campaigns: 'Campaigns',
   assets: 'Creative Assets',
   approvals: 'Approval Centre',
   'purchase-orders': 'Purchase Orders',
@@ -31,10 +35,11 @@ export const TopBar: React.FC<TopBarProps> = ({
   onQuickAction,
   quickActionLabel,
 }) => {
-  const { activeSection, setActiveSection } = useCommerce();
+  const { activeSection, setActiveSection, selectedTalentId, talents } = useCommerce();
+  const activeTalent = talents.find((t) => t.id === selectedTalentId);
 
   return (
-    <header className="sticky top-0 z-30 bg-white/95 backdrop-blur border-b border-zinc-200 px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between gap-8 shrink-0">
+    <header className="sticky top-0 z-30 bg-white/95 backdrop-blur border-b border-zinc-200 px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between gap-6 shrink-0">
       {/* Zone 1: Mobile trigger + Breadcrumb trail */}
       <div className="flex items-center gap-3 min-w-0">
         <button
@@ -51,26 +56,32 @@ export const TopBar: React.FC<TopBarProps> = ({
             onClick={() => setActiveSection('dashboard')}
             className="font-semibold text-zinc-900 hover:text-[#BC1F2F] transition-colors shrink-0"
           >
-            CAA
+            CAA × Mercenta
           </button>
           <span className="text-zinc-300" aria-hidden="true">/</span>
-          <button
-            type="button"
-            onClick={() => setActiveSection('profile')}
-            className="text-zinc-600 hover:text-zinc-900 transition-colors hidden sm:inline shrink-0"
-          >
-            iShowSpeed
-          </button>
-          <span className="text-zinc-300 hidden sm:inline" aria-hidden="true">/</span>
-          <span className="font-medium text-zinc-900 truncate">{SECTION_TITLES[activeSection]}</span>
+          {activeTalent && (
+            <>
+              <button
+                type="button"
+                onClick={() => setActiveSection('profile')}
+                className="text-zinc-600 hover:text-zinc-900 transition-colors hidden sm:inline shrink-0"
+              >
+                {activeTalent.name}
+              </button>
+              <span className="text-zinc-300 hidden sm:inline" aria-hidden="true">/</span>
+            </>
+          )}
+          <span className="font-medium text-zinc-900 truncate">
+            {SECTION_TITLES[activeSection]}
+          </span>
         </div>
       </div>
 
       {/* Zone 2: Quiet demonstration disclaimer */}
       <div className="hidden xl:flex items-center gap-2 text-xs text-zinc-500 whitespace-nowrap shrink-0">
-        <span>Proposed Demonstration Environment</span>
+        <span>Amazon UK Target Market Only (£ GBP)</span>
         <span aria-hidden="true">·</span>
-        <span>Illustrative Programme Data Only</span>
+        <span>Deterministic Research & Scoring Workspace</span>
       </div>
 
       {/* Zone 3: Single primary contextual action */}

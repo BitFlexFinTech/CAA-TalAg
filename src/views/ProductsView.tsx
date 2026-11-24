@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ChevronLeft,
   ChevronRight,
@@ -8,6 +8,7 @@ import {
   Search,
   Send,
   SlidersHorizontal,
+  Sparkles,
   Trash2,
   Upload,
 } from 'lucide-react';
@@ -25,6 +26,7 @@ import { StatusTag } from '../components/common/StatusTag';
 import { Drawer } from '../components/common/Drawer';
 import { Modal } from '../components/common/Modal';
 import { CatalogConfiguratorModal } from '../components/catalog/CatalogConfiguratorModal';
+import { LiveMockupStudio } from '../components/products/LiveMockupStudio';
 
 const STAGES: DevelopmentStage[] = [
   'Concept Draft',
@@ -64,6 +66,8 @@ export const ProductsView: React.FC<ProductsViewProps> = ({ openAddSignal }) => 
     collections,
     assets,
     catalogProducts,
+    mockupPrefillAssetSrc,
+    mockupTabRequestCount,
     addProduct,
     updateProduct,
     deleteProduct,
@@ -73,7 +77,8 @@ export const ProductsView: React.FC<ProductsViewProps> = ({ openAddSignal }) => 
 
   const manualFileRef = useRef<HTMLInputElement | null>(null);
 
-  const [activeTab, setActiveTab] = useState<'catalog' | 'concepts'>('catalog');
+  const [activeTab, setActiveTab] = useState<'catalog' | 'mockup' | 'concepts'>('catalog');
+  const [studioInitialBlank, setStudioInitialBlank] = useState<CatalogBlankProduct | null>(null);
   const [catSearch, setCatSearch] = useState('');
   const [catFilter, setCatFilter] = useState<CatalogFilterGroup>('All');
   const [catPage, setCatPage] = useState(1);
@@ -115,11 +120,17 @@ export const ProductsView: React.FC<ProductsViewProps> = ({ openAddSignal }) => 
     [assets]
   );
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (openAddSignal && openAddSignal > 0) {
       setActiveTab('catalog');
     }
   }, [openAddSignal]);
+
+  useEffect(() => {
+    if (mockupTabRequestCount > 0) {
+      setActiveTab('mockup');
+    }
+  }, [mockupTabRequestCount]);
 
   const openCreateModal = () => {
     setNewName('');
@@ -261,7 +272,7 @@ export const ProductsView: React.FC<ProductsViewProps> = ({ openAddSignal }) => 
 
         {/* Mode Switcher + Manual Create CTA */}
         <div className="flex flex-wrap items-center gap-2.5">
-          <div className="flex items-center gap-1 p-1 bg-zinc-100 border border-zinc-200 rounded-md">
+          <div className="flex flex-wrap items-center gap-1 p-1 bg-zinc-100 border border-zinc-200 rounded-md">
             <button
               type="button"
               onClick={() => setActiveTab('catalog')}
@@ -275,6 +286,18 @@ export const ProductsView: React.FC<ProductsViewProps> = ({ openAddSignal }) => 
             </button>
             <button
               type="button"
+              onClick={() => setActiveTab('mockup')}
+              className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-medium rounded transition-colors whitespace-nowrap ${
+                activeTab === 'mockup'
+                  ? 'bg-zinc-900 text-white shadow-xs'
+                  : 'text-zinc-600 hover:text-zinc-900'
+              }`}
+            >
+              <Sparkles className="w-3 h-3 text-[#BC1F2F]" />
+              <span>Live Mockup Studio</span>
+            </button>
+            <button
+              type="button"
               onClick={() => setActiveTab('concepts')}
               className={`px-3.5 py-1.5 text-xs font-medium rounded transition-colors whitespace-nowrap ${
                 activeTab === 'concepts'
@@ -282,7 +305,7 @@ export const ProductsView: React.FC<ProductsViewProps> = ({ openAddSignal }) => 
                   : 'text-zinc-600 hover:text-zinc-900'
               }`}
             >
-              Configured iShowSpeed SKUs ({products.length})
+              Configured UK SKUs ({products.length})
             </button>
           </div>
           <button
@@ -428,14 +451,26 @@ export const ProductsView: React.FC<ProductsViewProps> = ({ openAddSignal }) => 
                     <span className="font-mono-tabular text-[11px] text-zinc-600">
                       {variantTotal} variants
                     </span>
-                    <button
-                      type="button"
-                      onClick={() => setConfiguringBlank(item)}
-                      className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-white bg-zinc-900 hover:bg-[#BC1F2F] rounded transition-colors whitespace-nowrap"
-                    >
-                      <SlidersHorizontal className="w-3 h-3" />
-                      <span>Colors & Sizes</span>
-                    </button>
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setStudioInitialBlank(item);
+                          setActiveTab('mockup');
+                        }}
+                        className="px-2 py-1.5 text-[11px] font-medium text-zinc-800 bg-white border border-zinc-300 hover:border-zinc-900 rounded transition-colors whitespace-nowrap"
+                      >
+                        Mockup
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setConfiguringBlank(item)}
+                        className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-white bg-zinc-900 hover:bg-[#BC1F2F] rounded transition-colors whitespace-nowrap"
+                      >
+                        <SlidersHorizontal className="w-3 h-3" />
+                        <span>Colors & Sizes</span>
+                      </button>
+                    </div>
                   </div>
                 </div>
               );
@@ -476,8 +511,17 @@ export const ProductsView: React.FC<ProductsViewProps> = ({ openAddSignal }) => 
             </div>
           )}
         </div>
+      ) : activeTab === 'mockup' ? (
+        <LiveMockupStudio
+          initialBlank={studioInitialBlank}
+          initialAssetSrc={mockupPrefillAssetSrc}
+          onSavedConcept={(name) => {
+            setBannerMessage(`Saved real-time mockup concept "${name}" to Configured UK SKUs.`);
+            setActiveTab('concepts');
+          }}
+        />
       ) : (
-        /* Configured iShowSpeed Wholesale SKUs */
+        /* Configured UK Wholesale SKUs */
         <div className="space-y-5">
           <div className="bg-white border border-zinc-200 rounded-md p-4 flex flex-wrap items-center justify-between gap-3">
             <div className="relative flex-1 min-w-[220px]">

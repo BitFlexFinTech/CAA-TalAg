@@ -2,9 +2,12 @@ import React from 'react';
 import {
   BarChart3,
   Boxes,
+  Building2,
   CheckSquare,
   ClipboardList,
   FolderKanban,
+  Globe2,
+  Handshake,
   Image,
   Layers,
   LayoutDashboard,
@@ -12,12 +15,14 @@ import {
   Package,
   PoundSterling,
   Settings,
+  Store,
   Truck,
-  UserCheck,
+  Users,
   X,
 } from 'lucide-react';
 import { useCommerce } from '../../context/CommerceContext';
 import { NavSectionId } from '../../types/commerce';
+import { TalentAvatar } from '../common/TalentAvatar';
 
 interface NavGroup {
   label: string;
@@ -35,28 +40,61 @@ interface SidebarProps {
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({ mobileOpen, onCloseMobile }) => {
-  const { activeSection, setActiveSection, metrics } = useCommerce();
+  const {
+    activeSection,
+    setActiveSection,
+    selectedTalentId,
+    talents,
+    metrics,
+    intelligenceMetrics,
+  } = useCommerce();
+
+  const activeTalent =
+    talents.find((t) => t.id === selectedTalentId) ?? talents[0];
 
   const navGroups: NavGroup[] = [
     {
-      label: 'Overview',
+      label: 'Intelligence',
       items: [
         { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-        { id: 'profile', label: 'iShowSpeed Profile', icon: UserCheck },
+        {
+          id: 'profile',
+          label: 'Talent Directory',
+          icon: Users,
+          badge: intelligenceMetrics.totalTalents,
+        },
+        {
+          id: 'brands',
+          label: 'Brands & Products',
+          icon: Building2,
+          badge: intelligenceMetrics.brandsDiscovered,
+        },
+        {
+          id: 'uk-opportunities',
+          label: 'UK Opportunities',
+          icon: Globe2,
+        },
+        {
+          id: 'acquisition',
+          label: 'Brand Acquisition',
+          icon: Handshake,
+          badge: intelligenceMetrics.activeAcquisitionsCount,
+        },
+        { id: 'campaigns', label: 'Amazon Campaigns', icon: Megaphone },
+        {
+          id: 'brand-stores',
+          label: 'Brand Store Studio',
+          icon: Store,
+          badge: intelligenceMetrics.brandStoresCount,
+        },
       ],
     },
     {
-      label: 'Merchandise',
+      label: 'Operations',
       items: [
         { id: 'concepts', label: 'Product Concepts', icon: Package },
         { id: 'development', label: 'Product Development', icon: FolderKanban },
         { id: 'collections', label: 'Collections', icon: Layers },
-      ],
-    },
-    {
-      label: 'Brand & Approvals',
-      items: [
-        { id: 'campaigns', label: 'Campaigns', icon: Megaphone },
         { id: 'assets', label: 'Creative Assets', icon: Image },
         {
           id: 'approvals',
@@ -64,21 +102,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileOpen, onCloseMobile }) =
           icon: CheckSquare,
           badge: metrics.outstandingApprovals,
         },
-      ],
-    },
-    {
-      label: 'Operations & Finance',
-      items: [
         { id: 'purchase-orders', label: 'Purchase Orders', icon: ClipboardList },
         { id: 'fulfilment', label: 'Orders & Fulfilment', icon: Truck },
         { id: 'inventory', label: 'Inventory', icon: Boxes },
         { id: 'royalties', label: 'Royalties', icon: PoundSterling },
         { id: 'financials', label: 'Financial Reports', icon: BarChart3 },
+        { id: 'settings', label: 'Settings', icon: Settings },
       ],
-    },
-    {
-      label: 'Workspace',
-      items: [{ id: 'settings', label: 'Settings', icon: Settings }],
     },
   ];
 
@@ -100,13 +130,16 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileOpen, onCloseMobile }) =
             <span className="font-display text-2xl font-extrabold tracking-[-0.04em] text-white">
               CAA
             </span>
-            <span className="h-3.5 w-[2px] bg-[#BC1F2F] inline-block translate-y-[1px]" aria-hidden="true" />
+            <span
+              className="h-3.5 w-[2px] bg-[#BC1F2F] inline-block translate-y-[1px]"
+              aria-hidden="true"
+            />
             <span className="text-xs font-medium text-zinc-400 tracking-wide whitespace-nowrap">
-              Talent Commerce
+              Commercial Intel
             </span>
           </div>
           <p className="text-[11px] text-zinc-500 mt-1 truncate">
-            iShowSpeed · Proposed PoC
+            UK Wholesale & Roster Platform
           </p>
         </button>
         <button
@@ -119,31 +152,30 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileOpen, onCloseMobile }) =
         </button>
       </div>
 
-      {/* Dedicated Single-Talent Context Strip */}
-      <div className="px-4 py-3 border-b border-zinc-800/80 bg-zinc-950/60 shrink-0">
-        <button
-          type="button"
-          onClick={() => handleSelect('profile')}
-          className="w-full flex items-center gap-3 text-left hover:bg-zinc-900/80 p-1.5 -m-1.5 rounded transition-colors"
-        >
-          <img
-            src="/images/talent/speed-chinatown-01.jpg"
-            alt="iShowSpeed (Darren Watkins Jr.)"
-            referrerPolicy="no-referrer"
-            className="w-9 h-9 rounded object-cover border border-zinc-700 shrink-0"
-          />
-          <div className="min-w-0 flex-1">
-            <p className="text-xs font-semibold text-white truncate">iShowSpeed</p>
-            <p className="text-[11px] text-zinc-400 truncate">Darren Watkins Jr.</p>
-          </div>
-        </button>
-      </div>
+      {/* Active Talent Context Strip */}
+      {activeTalent && (
+        <div className="px-4 py-3 border-b border-zinc-800/80 bg-zinc-950/60 shrink-0">
+          <button
+            type="button"
+            onClick={() => handleSelect('profile')}
+            className="w-full flex items-center gap-3 text-left hover:bg-zinc-900/80 p-1.5 -m-1.5 rounded transition-colors"
+          >
+            <TalentAvatar talent={activeTalent} size="sm" className="border-zinc-700" />
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-semibold text-white truncate">{activeTalent.name}</p>
+              <p className="text-[11px] text-zinc-400 truncate">
+                {activeTalent.vertical} · Active Focus
+              </p>
+            </div>
+          </button>
+        </div>
+      )}
 
-      {/* 14-Item Persistent Navigation */}
+      {/* Unified Intelligence & Operations Navigation */}
       <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-5" aria-label="Main navigation">
         {navGroups.map((group) => (
           <div key={group.label}>
-            <p className="px-2.5 mb-1.5 text-[11px] font-medium text-zinc-500 tracking-wide">
+            <p className="px-2.5 mb-1.5 text-[11px] font-medium text-zinc-500 uppercase tracking-wider">
               {group.label}
             </p>
             <ul className="space-y-0.5">
@@ -190,7 +222,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileOpen, onCloseMobile }) =
         ))}
       </nav>
 
-      {/* Subtle Powered by Mercenta Attribution */}
+      {/* Mercenta UK Infrastructure Attribution */}
       <div className="px-5 py-3.5 border-t border-zinc-800/90 bg-zinc-950/70 shrink-0">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 min-w-0">
@@ -219,7 +251,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileOpen, onCloseMobile }) =
               <p className="text-[11px] text-zinc-400 truncate">
                 Powered by <span className="text-zinc-200 font-medium">Mercenta</span>
               </p>
-              <p className="text-[10px] text-zinc-500 truncate">Proposed Operations Layer</p>
+              <p className="text-[10px] text-zinc-500 truncate">Amazon UK Wholesale Only</p>
             </div>
           </div>
         </div>
@@ -229,10 +261,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileOpen, onCloseMobile }) =
 
   return (
     <>
-      {/* Desktop persistent sidebar */}
       <aside className="hidden lg:block shrink-0 h-screen sticky top-0">{sidebarContent}</aside>
-
-      {/* Mobile slide-over sidebar */}
       {mobileOpen && (
         <div className="fixed inset-0 z-50 lg:hidden flex">
           <div
